@@ -77,6 +77,8 @@ MergingSortedAlgorithm::MergingSortedAlgorithm(
     , apply_virtual_row_conversions(apply_virtual_row_conversions_)
     , current_inputs(num_inputs)
     , sorting_queue_strategy(sorting_queue_strategy_)
+    , use_batch_queue_for_default(
+        !filter_column_name_ && !limit_ && !max_block_size_bytes_ && !use_average_block_sizes)
     , cursors(num_inputs)
 {
     if (filter_column_position != -1)
@@ -142,7 +144,7 @@ void MergingSortedAlgorithm::initialize(Inputs inputs)
     }
 #endif
 
-    if (sorting_queue_strategy == SortingQueueStrategy::Default)
+    if (!useBatchQueue())
     {
         queue_variants.callOnVariant([&](auto & queue)
         {
@@ -185,7 +187,7 @@ void MergingSortedAlgorithm::consume(Input & input, size_t source_num)
     UNUSED(checkVirtualRowBoundary);
 #endif
 
-    if (sorting_queue_strategy == SortingQueueStrategy::Default)
+    if (!useBatchQueue())
     {
         queue_variants.callOnVariant([&](auto & queue)
         {
@@ -203,7 +205,7 @@ void MergingSortedAlgorithm::consume(Input & input, size_t source_num)
 
 IMergingAlgorithm::Status MergingSortedAlgorithm::merge()
 {
-    if (sorting_queue_strategy == SortingQueueStrategy::Default)
+    if (!useBatchQueue())
     {
         IMergingAlgorithm::Status result = queue_variants.callOnVariant([&](auto & queue)
         {
