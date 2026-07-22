@@ -59,7 +59,9 @@ SharedHeader makeHeader(size_t column_count)
 
 SortDescription makeSortDescription()
 {
-    return SortDescription{SortColumnDescription("key", 1, 1)};
+    SortDescription description;
+    description.emplace_back("key", 1, 1);
+    return description;
 }
 
 PreparedInputs makeInputs(const Workload & workload, UInt64 runtime_seed)

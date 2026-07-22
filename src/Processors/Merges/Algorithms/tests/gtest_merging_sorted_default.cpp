@@ -55,7 +55,9 @@ SharedHeader makeHeader(bool with_filter)
 
 SortDescription makeSortDescription()
 {
-    return SortDescription{SortColumnDescription("key", 1, 1)};
+    SortDescription description;
+    description.emplace_back("key", 1, 1);
+    return description;
 }
 
 Chunk makeChunk(const std::vector<Row> & rows, bool with_filter)
