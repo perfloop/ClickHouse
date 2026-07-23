@@ -162,8 +162,8 @@ void MergingSortedAlgorithm::initialize(Inputs inputs)
                     return;
 
                 auto & current = queue.current();
-                first_batch_can_amortize = current->rowsLeft() > 1
-                    && (queue.size() == 1 || queue.nextChild().greaterWithOffset(current, 0, 1));
+                first_batch_can_amortize = current->rowsLeft() > 3
+                    && (queue.size() == 1 || queue.nextChild().greaterWithOffset(current, 0, 3));
             });
             use_batch_queue_for_default = first_batch_can_amortize;
         }
@@ -451,24 +451,6 @@ IMergingAlgorithm::Status MergingSortedAlgorithm::mergeBatchImpl(TSortingQueue &
         auto [current_ptr, initial_batch_size] = queue.current();
         auto current = *current_ptr;
 
-        /// A one-row prefix pays the Batch queue's detection work without
-        /// amortizing either a range insertion or a heap update. Continue this
-        /// Default merge on its original queue from the current cursor state.
-        if (use_batch_queue_for_default && initial_batch_size == 1)
-        {
-            sorting_queue_strategy = SortingQueueStrategy::Default;
-            use_batch_queue_for_default = false;
-            queue_variants.callOnVariant([&](auto & default_queue)
-            {
-                using QueueType = std::decay_t<decltype(default_queue)>;
-                default_queue = QueueType(cursors);
-            });
-            return queue_variants.callOnVariant([&](auto & default_queue)
-            {
-                return mergeImpl(default_queue);
-            });
-        }
-
         bool batch_skip_last_row = false;
         if (current.impl->isLast(initial_batch_size) && current_inputs[current.impl->order].skip_last_row)
         {
@@ -505,10 +487,9 @@ IMergingAlgorithm::Status MergingSortedAlgorithm::mergeBatchImpl(TSortingQueue &
             limit_reached = true;
         }
 
-        if (unlikely(current.impl->isFirst() &&
-            current.impl->isLast(initial_batch_size) &&
-            !current_inputs[current.impl->order].skip_last_row &&
-            (!use_batch_queue_for_default || updated_batch_size == initial_batch_size)))
+        if (unlikely(current.impl->isFirst()
+            && current.impl->isLast(initial_batch_size)
+            && !current_inputs[current.impl->order].skip_last_row))
         {
             /** This is special optimization if current cursor is totally less than next cursor.
               * We want to insert current cursor chunk directly in merged data.

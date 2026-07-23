@@ -60,7 +60,7 @@ private:
     Inputs current_inputs;
 
     SortingQueueStrategy sorting_queue_strategy;
-    /// True only while an eligible Default merge is using the Batch queue.
+    /// True when an eligible Default merge may be promoted during initialize().
     bool use_batch_queue_for_default;
 
     SortCursorImpls cursors;
