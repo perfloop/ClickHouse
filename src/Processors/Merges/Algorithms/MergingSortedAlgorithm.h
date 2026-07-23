@@ -60,6 +60,7 @@ private:
     Inputs current_inputs;
 
     SortingQueueStrategy sorting_queue_strategy;
+    /// True only while an eligible Default merge is using the Batch queue.
     bool use_batch_queue_for_default;
 
     SortCursorImpls cursors;
@@ -73,9 +74,7 @@ private:
     Status mergeBatchImpl(TSortingQueue & queue);
 
     bool hasFilter() const { return filter_column_position != -1; }
-    /// Unfiltered Default merges can reuse the Batch queue's proven prefix only
-    /// when no limit, byte-size, or average-block-size boundary is requested.
-    bool useBatchQueue() const { return sorting_queue_strategy == SortingQueueStrategy::Batch || use_batch_queue_for_default; }
+    void switchToDefaultQueue();
     void insertRow(const SortCursorImpl & current);
     void insertRows(const SortCursorImpl & current, size_t num_rows);
     void insertChunk(size_t source_num);
