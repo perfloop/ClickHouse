@@ -249,17 +249,6 @@ IMergingAlgorithm::Status MergingSortedAlgorithm::merge()
     return result;
 }
 
-void MergingSortedAlgorithm::switchToDefaultQueue()
-{
-    sorting_queue_strategy = SortingQueueStrategy::Default;
-    use_batch_queue_for_default = false;
-    queue_variants.callOnVariant([&](auto & queue)
-    {
-        using QueueType = std::decay_t<decltype(queue)>;
-        queue = QueueType(cursors);
-    });
-}
-
 void MergingSortedAlgorithm::insertRow(const SortCursorImpl & current)
 {
     auto write_row_source = [&](bool skipped)
@@ -467,7 +456,13 @@ IMergingAlgorithm::Status MergingSortedAlgorithm::mergeBatchImpl(TSortingQueue &
         /// Default merge on its original queue from the current cursor state.
         if (use_batch_queue_for_default && initial_batch_size == 1)
         {
-            switchToDefaultQueue();
+            sorting_queue_strategy = SortingQueueStrategy::Default;
+            use_batch_queue_for_default = false;
+            queue_variants.callOnVariant([&](auto & default_queue)
+            {
+                using QueueType = std::decay_t<decltype(default_queue)>;
+                default_queue = QueueType(cursors);
+            });
             return queue_variants.callOnVariant([&](auto & default_queue)
             {
                 return mergeImpl(default_queue);
