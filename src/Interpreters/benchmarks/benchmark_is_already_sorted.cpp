@@ -2,7 +2,6 @@
 #include <Columns/ColumnsNumber.h>
 #include <Core/Block.h>
 #include <Core/SortDescription.h>
-#include <DataTypes/DataTypesNumber.h>
 #include <Interpreters/sortBlock.h>
 
 #include <benchmark/benchmark.h>
@@ -10,7 +9,6 @@
 #include <chrono>
 #include <cstddef>
 #include <iostream>
-#include <memory>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -26,6 +24,8 @@ struct SortWorkload
     SortDescription description;
 };
 
+// Every workload resolves exact block-column names, so the predicate never
+// inspects type metadata while constructing its sort descriptors.
 SortDescription makeSortDescription(size_t key_count)
 {
     SortDescription description;
@@ -46,7 +46,7 @@ SortWorkload makeAllConstantWorkload(size_t rows, size_t key_count, UInt64 seed)
     {
         auto value = ColumnUInt64::create();
         value->insert(seed + key);
-        columns.emplace_back(ColumnConst::create(std::move(value), rows), std::make_shared<DataTypeUInt64>(), "key" + std::to_string(key));
+        columns.emplace_back(ColumnConst::create(std::move(value), rows), DataTypePtr{}, "key" + std::to_string(key));
     }
 
     return {Block(std::move(columns)), makeSortDescription(key_count)};
@@ -63,13 +63,13 @@ SortWorkload makeMixedWorkload(size_t rows, size_t key_count, UInt64 seed, bool 
         const UInt64 value = make_unsorted && row == rows / 2 ? seed + row - 2 : seed + row;
         first_key->insert(value);
     }
-    columns.emplace_back(std::move(first_key), std::make_shared<DataTypeUInt64>(), "key0");
+    columns.emplace_back(std::move(first_key), DataTypePtr{}, "key0");
 
     for (size_t key = 1; key < key_count; ++key)
     {
         auto value = ColumnUInt64::create();
         value->insert(seed + key);
-        columns.emplace_back(ColumnConst::create(std::move(value), rows), std::make_shared<DataTypeUInt64>(), "key" + std::to_string(key));
+        columns.emplace_back(ColumnConst::create(std::move(value), rows), DataTypePtr{}, "key" + std::to_string(key));
     }
 
     return {Block(std::move(columns)), makeSortDescription(key_count)};
