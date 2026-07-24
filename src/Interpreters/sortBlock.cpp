@@ -394,6 +394,20 @@ bool isAlreadySorted(const Block & block, const SortDescription & description)
         return true;
 
     ColumnsWithSortDescriptions columns_with_sort_desc = getColumnsWithSortDescription(block, description);
+
+    bool all_const = true;
+    for (const auto & column_with_sort_desc : columns_with_sort_desc)
+    {
+        if (!column_with_sort_desc.column_const)
+        {
+            all_const = false;
+            break;
+        }
+    }
+
+    if (unlikely(all_const))
+        return true;
+
     bool is_collation_required = false;
 
     for (auto & column_with_sort_desc : columns_with_sort_desc)
