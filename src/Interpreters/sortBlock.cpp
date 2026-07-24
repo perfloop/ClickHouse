@@ -46,6 +46,16 @@ inline bool isCollationRequired(const SortColumnDescription & description)
     return description.collator != nullptr;
 }
 
+/// Keep the constant-key probe out of the mixed-key scan's generated code.
+bool NO_INLINE areAllColumnsConst(const ColumnsWithSortDescriptions & columns)
+{
+    for (const auto & column : columns)
+        if (!column.column_const)
+            return false;
+
+    return true;
+}
+
 template <bool check_collation>
 struct PartialSortingLessImpl
 {
@@ -394,20 +404,6 @@ bool isAlreadySorted(const Block & block, const SortDescription & description)
         return true;
 
     ColumnsWithSortDescriptions columns_with_sort_desc = getColumnsWithSortDescription(block, description);
-
-    bool all_const = true;
-    for (const auto & column_with_sort_desc : columns_with_sort_desc)
-    {
-        if (!column_with_sort_desc.column_const)
-        {
-            all_const = false;
-            break;
-        }
-    }
-
-    if (unlikely(all_const))
-        return true;
-
     bool is_collation_required = false;
 
     for (auto & column_with_sort_desc : columns_with_sort_desc)
@@ -420,6 +416,9 @@ bool isAlreadySorted(const Block & block, const SortDescription & description)
     }
 
     size_t rows = block.rows();
+
+    if (unlikely(areAllColumnsConst(columns_with_sort_desc)))
+        return true;
 
     if (is_collation_required)
     {
