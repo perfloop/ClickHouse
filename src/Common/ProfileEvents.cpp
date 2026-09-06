@@ -601,7 +601,9 @@
     \
     M(MergeTreeDataProjectionWriterRows, "Number of rows INSERTed to MergeTree tables projection.", ValueType::Number) \
     M(MergeTreeDataProjectionWriterUncompressedBytes, "Uncompressed bytes (for columns as they stored in memory) INSERTed to MergeTree tables projection.", ValueType::Bytes) \
-    M(MergeTreeDataProjectionWriterCompressedBytes, "Bytes written to filesystem for data INSERTed to MergeTree tables projection.", ValueType::Bytes) \
+    M(MergeTreeDataProjectionWriterCompressedBytes, "Bytes written to filesystem for MergeTree projection parts.", ValueType::Bytes) \
+    M(MergeTreeProjectionSerializationCompressedBytes, "Compressed bytes written while serializing MergeTree projections, including rebuilt output and recursively merged projection parts.", ValueType::Bytes) \
+    M(MergeTreeRecursiveProjectionPartMergeCommits, "Number of recursive projection-part merge transactions committed by MergeProjectionPartsTask.", ValueType::Number) \
     M(MergeTreeDataProjectionWriterBlocks, "Number of blocks INSERTed to MergeTree tables projection. Each block forms a data part of level zero.", ValueType::Number) \
     M(MergeTreeDataProjectionWriterBlocksAlreadySorted, "Number of blocks INSERTed to MergeTree tables projection that appeared to be already sorted.", ValueType::Number) \
     \

@@ -94,6 +94,7 @@ namespace ProfileEvents
     extern const Event MergeTextIndexStageExecuteMilliseconds;
     extern const Event MergeProjectionStageExecuteMilliseconds;
     extern const Event MergeTreeDataWriterStatisticsCalculationMicroseconds;
+    extern const Event MergeTreeProjectionSerializationCompressedBytes;
     extern const Event MergedProjections;
     extern const Event RebuiltProjections;
 }
@@ -2449,6 +2450,9 @@ bool MergeTask::MergeProjectionsStage::finalizeProjectionsAndWholeMerge() const
         global_ctx->to->finalizePart(global_ctx->new_data_part, global_ctx->gathered_data, ctx->need_sync, nullptr);
     else
         global_ctx->to->finalizePart(global_ctx->new_data_part, global_ctx->gathered_data, ctx->need_sync, &global_ctx->storage_columns);
+
+    if (global_ctx->projection)
+        ProfileEvents::increment(ProfileEvents::MergeTreeProjectionSerializationCompressedBytes, global_ctx->new_data_part->getBytesOnDisk());
 
     auto cached_marks = global_ctx->to->releaseCachedMarks();
     for (auto & [name, marks] : cached_marks)

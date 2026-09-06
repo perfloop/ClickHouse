@@ -69,6 +69,7 @@ namespace ProfileEvents
     extern const Event MergeTreeDataProjectionWriterRows;
     extern const Event MergeTreeDataProjectionWriterUncompressedBytes;
     extern const Event MergeTreeDataProjectionWriterCompressedBytes;
+    extern const Event MergeTreeProjectionSerializationCompressedBytes;
     extern const Event MergeTreeDataProjectionWriterSortingBlocksMicroseconds;
     extern const Event MergeTreeDataProjectionWriterMergingBlocksMicroseconds;
     extern const Event MergeTreeDataWriterStatisticsCalculationMicroseconds;
@@ -1339,6 +1340,8 @@ MergeTreeTemporaryPartPtr MergeTreeDataWriter::writeProjectionPartImpl(
     ProfileEvents::increment(ProfileEvents::MergeTreeDataProjectionWriterRows, block.rows());
     ProfileEvents::increment(ProfileEvents::MergeTreeDataProjectionWriterUncompressedBytes, block.bytes());
     ProfileEvents::increment(ProfileEvents::MergeTreeDataProjectionWriterCompressedBytes, new_data_part->getBytesOnDisk());
+    if (is_temp)
+        ProfileEvents::increment(ProfileEvents::MergeTreeProjectionSerializationCompressedBytes, new_data_part->getBytesOnDisk());
 
     return temp_part;
 }
