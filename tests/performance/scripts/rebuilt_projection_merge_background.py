@@ -1191,12 +1191,10 @@ def run_merge(
             raise RuntimeError(f"merge did not read compressed part data: {delta!r}")
         if projection_serialization_bytes <= 0:
             raise RuntimeError(f"merge did not write projection data: {delta!r}")
-        # Keep the historical output metric for the fixed comparison. The
-        # archived event included initial temporary-part commits and recursive
-        # merges; the renamed event is recursive-only. The streamed arm's
-        # temporary-part count proves that it has no initial commits, so the
-        # old result must not be described as a measurement of the renamed
-        # event's broader scope.
+        # The commit event is intentionally recursive-only. Each legacy
+        # temporary projection part is committed once, so the historical total
+        # is its initial temporary-part count plus recursive commits. The
+        # streamed arm has neither kind of temporary commit.
         if final_parts:
             expected_final_parts = len(MULTI_PROJECTION_SCENARIOS) if scenario == "multi" else 1
             if (not use_default_selector and final_parts != expected_final_parts) or temporary_parts:
@@ -1223,7 +1221,7 @@ def run_merge(
         else:
             if temporary_parts <= 0:
                 raise RuntimeError(f"legacy merge did not write temporary projection parts: {delta!r}")
-            temporary_part_commits = delta[RECURSIVE_PROJECTION_PART_MERGE_COMMITS_EVENT]
+            temporary_part_commits = temporary_parts + delta[RECURSIVE_PROJECTION_PART_MERGE_COMMITS_EVENT]
             if temporary_part_commits <= 0:
                 raise RuntimeError(f"legacy merge did not record projection-part commits: {delta!r}")
 
